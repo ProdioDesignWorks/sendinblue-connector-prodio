@@ -35,6 +35,10 @@
     "eslint-plugin-import": "^2.14.0",
     "eslint-plugin-security": "^1.4.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ProdioDesignWorks/sendinblue-connector-prodio"
+  },
   "author": "Pawan Wagh <pawan@prodio.in> (http://prodio.in/)",
   "license": "ISC"
 }
