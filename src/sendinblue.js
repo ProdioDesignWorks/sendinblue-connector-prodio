@@ -54,7 +54,7 @@ export default class SendInBlue {
               type: 'classic',
               mirrorActive: 'true'
             };
-            if(typeof (emailPayload.campaignReplyTo) !== "undefined" && emailPayload.campaignReplyTo !== null){
+            if (typeof (emailPayload.campaignReplyTo) !== "undefined" && emailPayload.campaignReplyTo !== null) {
               emailCampaigns.replyTo = emailPayload.campaignReplyTo
             }
             var t = new Date();
@@ -98,14 +98,5 @@ export default class SendInBlue {
         })
       });
     });
-    //return 'This is sendinblue send email';
-  }
-
-  sendSMS() {
-    return 'This is sendinblue send sms';
-  }
-
-  createTemplate() {
-    return 'This is sendinblue create template';
   }
 }

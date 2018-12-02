@@ -1,6 +1,6 @@
 {
   "name": "sendinblue-connector-prodio",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Adapter for consuming sendinblue API's",
   "main": "lib/index.js",
   "scripts": {
@@ -39,7 +39,7 @@
     "type": "git",
     "url": "https://github.com/ProdioDesignWorks/sendinblue-connector-prodio"
   },
-  "author": "Pawan Wagh <pawan@prodio.in> (http://prodio.in/)",
+  "author": "Vatsal Shah <vatsal@prodio.in> (http://prodio.in/)",
   "license": "ISC",
   "dependencies": {
     "sib-api-v3-sdk": "^7.0.3"
