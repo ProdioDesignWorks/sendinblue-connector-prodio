@@ -4,8 +4,6 @@ var defaultClient = SibApiV3Sdk.ApiClient.instance;
 
 // Configure API key authorization: api-key
 var apiKey = defaultClient.authentications['api-key'];
-// Uncomment the following line to set a prefix for the API key, e.g. "Token" (defaults to null)
-//apiKey.apiKeyPrefix['api-key'] = "Token"
 const generateContactString = (contacts) => {
   var teamString = 'EMAIL';
   var teamContacts = contacts.map((user) => {
@@ -14,17 +12,17 @@ const generateContactString = (contacts) => {
   teamString += teamContacts.join("");
   return { userList: teamString };
 }
-let api_key_email;
+let api_key_email, senderEmail;
 
 export default class SendInBlue {
   constructor(config) {
     this.config = config;
     apiKey.apiKey = this.config.api_key;
     api_key_email = this.config.api_key_email;
+    senderEmail = this.config.api_sender_email;
   }
 
   sendEmail(emailPayload) {
-    var api = new SibApiV3Sdk.AccountApi();
     return new Promise((resolve, reject) => {
       var contactsApiInstance = new SibApiV3Sdk.ContactsApi();
       const createFolder = {
@@ -89,6 +87,33 @@ export default class SendInBlue {
             "success": false,
             "message": errorMsg.message
           })
+        });
+      }, function (error) {
+        let errorMsg = JSON.parse(error.response.text);
+        reject({
+          "success": false,
+          "message": errorMsg.message
+        })
+      });
+    });
+  }
+
+  sendTransactionalEmail(emailPayload) {
+    return new Promise((resolve, reject) => {
+      const apiInstance = new SibApiV3Sdk.SMTPApi();
+      let sendSmtpEmail = {};
+      sendSmtpEmail['sender'] = { name: senderEmail, email: senderEmail };
+      sendSmtpEmail['to'] = [{ email: emailPayload.sendTo }];
+      sendSmtpEmail['htmlContent'] = emailPayload.campaignHtml;
+      sendSmtpEmail['subject'] = emailPayload.campaignSubject;
+      if (typeof (emailPayload.campaignReplyTo) !== "undefined" && emailPayload.campaignReplyTo !== null) {
+        sendSmtpEmail['replyTo'] = emailPayload.campaignReplyTo;
+      }
+      console.log(sendSmtpEmail);
+      apiInstance.sendTransacEmail(sendSmtpEmail).then(function (data) {
+        resolve({
+          "success": true,
+          "body": data,
         });
       }, function (error) {
         let errorMsg = JSON.parse(error.response.text);
