@@ -6,12 +6,21 @@ var defaultClient = SibApiV3Sdk.ApiClient.instance;
 var apiKey = defaultClient.authentications['api-key'];
 const generateContactString = (contacts) => {
   var teamString = 'EMAIL';
-  var teamContacts = contacts.map((user) => {
-    return '\n' + user.email;
+  var teamContacts = contacts.map((email) => {
+    return '\n' + email;
   });
   teamString += teamContacts.join("");
   return { userList: teamString };
 }
+const isNullValue = (val) => {
+  if (typeof val === 'string') {
+    val = val.trim();
+  }
+  if (val === undefined || val === null || typeof val === 'undefined' || val === '' || val === 'undefined') {
+    return true;
+  }
+  return false;
+};
 let api_key_email, senderEmail;
 
 export default class SendInBlue {
@@ -36,10 +45,7 @@ export default class SendInBlue {
         contactsApiInstance.createList(createList).then(function (data) {
           let listArr = [];
           listArr.push(data.id);
-          let contacts = [{
-            "email": emailPayload.sendTo
-          }];
-          let listData = generateContactString(contacts);
+          let listData = generateContactString(emailPayload.sendTo);
           const requestContactImport = {
             "listIds": listArr,
             "fileBody": listData["userList"]
@@ -59,20 +65,55 @@ export default class SendInBlue {
             t.setSeconds(t.getSeconds() + 30);
             emailCampaigns['scheduledAt'] = t;
             emailCampaigns['htmlContent'] = emailPayload.campaignHtml;
-            emailCampaigns['sender'] = { name: api_key_email, email: api_key_email };
+            emailCampaigns['sender'] = {
+              name: !isNullValue(emailPayload.campaignSenderName) ? emailPayload.campaignSenderName : api_key_email,
+              email: !isNullValue(emailPayload.campaignSenderEmail) ? emailPayload.campaignSenderEmail : api_key_email,
+            };
             emailCampaigns['recipients'] = { listIds: requestContactImport['listIds'] };
-            emailApiInstance.createEmailCampaign(emailCampaigns).then(function (data) {
-              resolve({
-                "success": true,
-                "body": data,
-              })
-            }, function (error) {
-              let errorMsg = JSON.parse(error.response.text);
-              reject({
-                "success": false,
-                "message": errorMsg.message
-              })
-            });
+            if (isNullValue(emailPayload.campaignSenderEmail)) {
+              console.log('emailPayload not found');
+              emailApiInstance.createEmailCampaign(emailCampaigns).then(function (data) {
+                resolve({
+                  "success": true,
+                  "body": data,
+                })
+              }, function (error) {
+                let errorMsg = JSON.parse(error.response.text);
+                reject({
+                  "success": false,
+                  "message": errorMsg.message
+                })
+              });
+            } else {
+              console.log('emailPayload found');
+              var senderApiInstance = new SibApiV3Sdk.SendersApi();
+              var opts = {
+                'sender': {
+                  'name': emailPayload.campaignSenderName,
+                  'email': emailPayload.campaignSenderEmail
+                }
+              };
+              senderApiInstance.createSender(opts).then(function (data) {
+                emailApiInstance.createEmailCampaign(emailCampaigns).then(function (data) {
+                  resolve({
+                    "success": true,
+                    "body": data,
+                  })
+                }, function (error) {
+                  let errorMsg = JSON.parse(error.response.text);
+                  reject({
+                    "success": false,
+                    "message": errorMsg.message
+                  })
+                });
+              }, function (error) {
+                let errorMsg = JSON.parse(error.response.text);
+                reject({
+                  "success": false,
+                  "message": errorMsg.message
+                })
+              });
+            }
           }, function (error) {
             let errorMsg = JSON.parse(error.response.text);
             reject({
@@ -102,14 +143,16 @@ export default class SendInBlue {
     return new Promise((resolve, reject) => {
       const apiInstance = new SibApiV3Sdk.SMTPApi();
       let sendSmtpEmail = {};
-      sendSmtpEmail['sender'] = { name: senderEmail, email: senderEmail };
+      sendSmtpEmail['sender'] = {
+        name: !isNullValue(emailPayload.campaignSenderEmail) ? emailPayload.campaignSenderEmail : senderEmail,
+        email: !isNullValue(emailPayload.campaignSenderEmail) ? emailPayload.campaignSenderEmail : senderEmail
+      };
       sendSmtpEmail['to'] = [{ email: emailPayload.sendTo }];
       sendSmtpEmail['htmlContent'] = emailPayload.campaignHtml;
       sendSmtpEmail['subject'] = emailPayload.campaignSubject;
       if (typeof (emailPayload.campaignReplyTo) !== "undefined" && emailPayload.campaignReplyTo !== null) {
         sendSmtpEmail['replyTo'] = emailPayload.campaignReplyTo;
       }
-      console.log(sendSmtpEmail);
       apiInstance.sendTransacEmail(sendSmtpEmail).then(function (data) {
         resolve({
           "success": true,
