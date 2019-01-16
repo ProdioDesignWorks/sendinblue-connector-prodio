@@ -65,13 +65,15 @@ export default class SendInBlue {
             t.setSeconds(t.getSeconds() + 30);
             emailCampaigns['scheduledAt'] = t;
             emailCampaigns['htmlContent'] = emailPayload.campaignHtml;
+            if (emailPayload.campaignAttachment !== "") {
+              emailCampaigns['attachmentUrl'] = emailPayload.campaignAttachment;
+            }
             emailCampaigns['sender'] = {
               name: !isNullValue(emailPayload.campaignSenderName) ? emailPayload.campaignSenderName : api_key_email,
               email: !isNullValue(emailPayload.campaignSenderEmail) ? emailPayload.campaignSenderEmail : api_key_email,
             };
             emailCampaigns['recipients'] = { listIds: requestContactImport['listIds'] };
             if (isNullValue(emailPayload.campaignSenderEmail)) {
-              console.log('emailPayload not found');
               emailApiInstance.createEmailCampaign(emailCampaigns).then(function (data) {
                 resolve({
                   "success": true,
@@ -85,7 +87,6 @@ export default class SendInBlue {
                 })
               });
             } else {
-              console.log('emailPayload found');
               var senderApiInstance = new SibApiV3Sdk.SendersApi();
               var opts = {
                 'sender': {
@@ -150,6 +151,11 @@ export default class SendInBlue {
       sendSmtpEmail['to'] = [{ email: emailPayload.sendTo }];
       sendSmtpEmail['htmlContent'] = emailPayload.campaignHtml;
       sendSmtpEmail['subject'] = emailPayload.campaignSubject;
+      if (emailPayload.campaignAttachment !== "") {
+        sendSmtpEmail['attachment'] = [{
+          'url': emailPayload.campaignAttachment
+        }]
+      }
       if (typeof (emailPayload.campaignReplyTo) !== "undefined" && emailPayload.campaignReplyTo !== null) {
         sendSmtpEmail['replyTo'] = emailPayload.campaignReplyTo;
       }
